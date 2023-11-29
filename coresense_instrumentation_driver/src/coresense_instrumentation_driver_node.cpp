@@ -17,42 +17,35 @@
 
 int main(int argc, char * argv[])
 {
-  std::cout << "HOLA" << std::endl;
-
   rclcpp::init(argc, argv);
-
-  std::cout << "HOLA" << std::endl;
 
   if (argc < 3) {
     RCLCPP_INFO(rclcpp::get_logger("main"), "Usage: %s <topic> <topic_type>", argv[0]);
     return 1;
   }
 
-  std::cout << "HOLA" << std::endl;
-
   std::string topic = argv[1];
   std::string topic_type = argv[2];
-
-  std::cout << "HOLA" << std::endl;
 
   auto executor = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
 
   if (topic_type == "std_msgs::msg::String") {
-      auto node = std::make_shared<coresense_instrumentation_driver::InstrumentationLifecycleNode<std_msgs::msg::String>>();
+    auto node =
+      std::make_shared<coresense_instrumentation_driver::InstrumentationLifecycleNode<std_msgs::msg::String>>();
 
-      executor->add_node(node->get_node_base_interface());
-      executor->spin();
+    executor->add_node(node->get_node_base_interface());
+    executor->spin();
   } else if (topic_type == "sensor_msgs::msg::LaserScan") {
-      auto node = std::make_shared<coresense_instrumentation_driver::InstrumentationLifecycleNode<sensor_msgs::msg::LaserScan>>();
-  
-      executor->add_node(node->get_node_base_interface());
-      executor->spin();
+    auto node =
+      std::make_shared<coresense_instrumentation_driver::InstrumentationLifecycleNode<sensor_msgs::msg::LaserScan>>();
+
+    executor->add_node(node->get_node_base_interface());
+    executor->spin();
   } else {
-      RCLCPP_INFO(rclcpp::get_logger("main"), "Usage: %s <topic> <topic_type>", argv[0]);
-      return 1;
+    RCLCPP_INFO(rclcpp::get_logger("main"), "Usage: %s <topic> <topic_type>", argv[0]);
+    return 1;
   }
 
   rclcpp::shutdown();
   return 0;
 }
-

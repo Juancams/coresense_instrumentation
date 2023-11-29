@@ -14,93 +14,97 @@
 
 #include "coresense_instrumentation_driver/InstrumentationLifecycleNode.hpp"
 
+template class coresense_instrumentation_driver::InstrumentationLifecycleNode<sensor_msgs::msg::LaserScan>;
+template class coresense_instrumentation_driver::InstrumentationLifecycleNode<std_msgs::msg::String>;
+
 namespace coresense_instrumentation_driver
 {
 
 template<typename TopicT>
 InstrumentationLifecycleNode<TopicT>::InstrumentationLifecycleNode(
-    const rclcpp::NodeOptions & options)
-: rclcpp_lifecycle::LifecycleNode("node_name", "ns", options)
+  const rclcpp::NodeOptions & options)
+: rclcpp_lifecycle::LifecycleNode("InstrumentationLifecycleNode", "", options)
 {
-    topic_ = "laser_scan";
+  declare_parameter("topic", std::string(""));
+  declare_parameter("topic_type", std::string(""));
 
-    sub_ = this->create_subscription<TopicT>(
-        topic_, 10,
-        [this](const typename TopicT::SharedPtr msg) {
-            if (pub_) {
-                pub_->publish(std::make_unique<TopicT>(*msg));
-            }
-        });
+  get_parameter("topic", topic_);
+  get_parameter("topic_type", topic_type_);
 
-    pub_ = this->create_publisher<TopicT>("ns" + topic_, 10);
-
-    RCLCPP_INFO(get_logger(), "Creating InstrumentationLifecycleNode");
+  RCLCPP_DEBUG(get_logger(), "Creating InstrumentationLifecycleNode");
 }
 
 template<typename TopicT>
 InstrumentationLifecycleNode<TopicT>::~InstrumentationLifecycleNode()
 {
-    RCLCPP_INFO(get_logger(), "Destroying InstrumentationLifecycleNode");
-}
-
-template<typename TopicT>
-const std::string InstrumentationLifecycleNode<TopicT>::get_name()
-{
-    return this->get_name();
+  RCLCPP_DEBUG(get_logger(), "Destroying InstrumentationLifecycleNode");
 }
 
 template<typename TopicT>
 std::string InstrumentationLifecycleNode<TopicT>::get_topic()
 {
-    return topic_;
+  return topic_;
 }
 
 template<typename TopicT>
 typename rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 InstrumentationLifecycleNode<TopicT>::on_configure(const rclcpp_lifecycle::State &)
 {
-    // Add any configuration logic here
-    return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+  sub_ = this->create_subscription<TopicT>(
+    topic_, 10,
+    [this](const typename TopicT::SharedPtr msg) {
+      if (pub_) {
+        pub_->publish(std::make_unique<TopicT>(*msg));
+      }
+    });
+
+  pub_ = this->create_publisher<TopicT>("/coresense" + topic_, 10);
+
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 template<typename TopicT>
 typename rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 InstrumentationLifecycleNode<TopicT>::on_activate(const rclcpp_lifecycle::State &)
 {
-    // Add any activation logic here
-    return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+  pub_->on_activate();
+
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 template<typename TopicT>
 typename rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 InstrumentationLifecycleNode<TopicT>::on_deactivate(const rclcpp_lifecycle::State &)
 {
-    // Add any deactivation logic here
-    return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+  pub_->on_deactivate();
+
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 template<typename TopicT>
 typename rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 InstrumentationLifecycleNode<TopicT>::on_cleanup(const rclcpp_lifecycle::State &)
 {
-    // Add any cleanup logic here
-    return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+  pub_.reset();
+  sub_.reset();
+
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 template<typename TopicT>
 typename rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 InstrumentationLifecycleNode<TopicT>::on_shutdown(const rclcpp_lifecycle::State &)
 {
-    // Add any shutdown logic here
-    return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
-}
+  pub_.reset();
+  sub_.reset();
 
-// Explicit instantiation for the supported types
-template class InstrumentationLifecycleNode<std_msgs::msg::String>;
-template class InstrumentationLifecycleNode<sensor_msgs::msg::LaserScan>;
+  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
+}
 
 } // namespace coresense_instrumentation_driver
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(coresense_instrumentation_driver::InstrumentationLifecycleNode<sensor_msgs::msg::LaserScan>)
-RCLCPP_COMPONENTS_REGISTER_NODE(coresense_instrumentation_driver::InstrumentationLifecycleNode<std_msgs::msg::String>)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  coresense_instrumentation_driver::InstrumentationLifecycleNode<sensor_msgs::msg::LaserScan>)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  coresense_instrumentation_driver::InstrumentationLifecycleNode<std_msgs::msg::String>)

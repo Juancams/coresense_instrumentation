@@ -32,8 +32,8 @@ public:
 
   virtual ~InstrumentationLifecycleNode();
 
-  const std::string get_name();
   std::string get_topic();
+  std::string get_topic_type();
 
 private:
   using CallbackReturnT = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
@@ -45,8 +45,9 @@ private:
   CallbackReturnT on_shutdown(const rclcpp_lifecycle::State &) override;
 
   typename rclcpp::Subscription<TopicT>::SharedPtr sub_;
-  typename rclcpp::Publisher<TopicT>::SharedPtr pub_;
+  typename rclcpp_lifecycle::LifecyclePublisher<TopicT>::SharedPtr pub_;
   std::string topic_;
+  std::string topic_type_;
 };
 
 } // namespace coresense_instrumentation_driver
