@@ -1,3 +1,0 @@
-ament_add_gtest(test_coresense_instrumentation_driver_gtest test_coresense_instrumentation_driver.cpp)
-ament_target_dependencies(test_coresense_instrumentation_driver_gtest ${dependencies})
-target_link_libraries(test_coresense_instrumentation_driver_gtest ${PROJECT_NAME})

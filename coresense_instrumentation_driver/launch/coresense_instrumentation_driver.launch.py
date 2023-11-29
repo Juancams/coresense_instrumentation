@@ -15,25 +15,33 @@
 from launch import LaunchDescription
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
 
-    coresense_node = ComposableNode(
-        package='coresense_instrumentation_driver',
-        plugin='coresense_instrumentation_driver::CoresenseInstrumentationDriver',
-        name='coresense_instrumentation_driver_node',
-        namespace='coresense',
-        parameters=[{'topics': ['/scan', '/chatter'],
-                     'topic_types': ['sensor_msgs/msg/LaserScan', 'std_msgs/msg/String']}],
-    )
+    topics = ['scan', 'chatter']
+    types = ['sensor_msgs::msg::LaserScan', 'std_msgs::msg::String']
+
+    composable_nodes = []
+    for topic, topic_type in zip(topics, types):
+        composable_node = ComposableNode(
+            package='coresense_instrumentation_driver',
+            plugin='coresense_instrumentation_driver::InstrumentationLifecycleNode<' + topic_type + '>',
+            name=topic + '_node',
+            namespace='coresense',
+            parameters=[{'topic': topic, 'topic_type': topic_type}],
+        )
+        composable_nodes.append(composable_node)
+
 
     container = ComposableNodeContainer(
         name='coresense_container',
         namespace='coresense',
         package='rclcpp_components',
         executable='component_container',
-        composable_node_descriptions=[coresense_node],
+        composable_node_descriptions=composable_nodes,
         output='screen',
     )
 
