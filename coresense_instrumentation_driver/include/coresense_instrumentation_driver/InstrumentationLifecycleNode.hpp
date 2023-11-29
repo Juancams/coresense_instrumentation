@@ -35,7 +35,6 @@ public:
   std::string get_topic();
   std::string get_topic_type();
 
-private:
   using CallbackReturnT = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
   CallbackReturnT on_configure(const rclcpp_lifecycle::State &) override;
@@ -44,6 +43,7 @@ private:
   CallbackReturnT on_cleanup(const rclcpp_lifecycle::State &) override;
   CallbackReturnT on_shutdown(const rclcpp_lifecycle::State &) override;
 
+private:
   typename rclcpp::Subscription<TopicT>::SharedPtr sub_;
   typename rclcpp_lifecycle::LifecyclePublisher<TopicT>::SharedPtr pub_;
   std::string topic_;

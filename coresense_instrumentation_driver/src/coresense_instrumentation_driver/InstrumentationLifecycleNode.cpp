@@ -47,6 +47,12 @@ std::string InstrumentationLifecycleNode<TopicT>::get_topic()
 }
 
 template<typename TopicT>
+std::string InstrumentationLifecycleNode<TopicT>::get_topic_type()
+{
+  return topic_type_;
+}
+
+template<typename TopicT>
 typename rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 InstrumentationLifecycleNode<TopicT>::on_configure(const rclcpp_lifecycle::State &)
 {
