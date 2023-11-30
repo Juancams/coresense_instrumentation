@@ -21,6 +21,8 @@
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "image_transport/image_transport.hpp"
+#include "coresense_instrumentation_interfaces/srv/create_publisher.hpp"
+#include "coresense_instrumentation_interfaces/srv/delete_publisher.hpp"
 
 namespace coresense_instrumentation_driver
 {
@@ -50,6 +52,22 @@ public:
 private:
   typename rclcpp::Subscription<TopicT>::SharedPtr sub_;
   typename rclcpp_lifecycle::LifecyclePublisher<TopicT>::SharedPtr pub_;
+  
+  void handleCreatePublisherRequest(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<coresense_instrumentation_interfaces::srv::CreatePublisher::Request> request,
+    const std::shared_ptr<coresense_instrumentation_interfaces::srv::CreatePublisher::Response> response);
+
+  void handleDeletePublisherRequest(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeletePublisher::Request> request,
+    const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeletePublisher::Response> response);
+  
+  rclcpp::Service<coresense_instrumentation_interfaces::srv::CreatePublisher>::SharedPtr create_publisher_service_;
+  rclcpp::Service<coresense_instrumentation_interfaces::srv::DeletePublisher>::SharedPtr delete_publisher_service_;
+
+  std::unordered_map<std::string, typename rclcpp_lifecycle::LifecyclePublisher<TopicT>::SharedPtr> publishers_;
+
   std::string topic_;
   std::string topic_type_;
 };
