@@ -13,6 +13,7 @@ find_package(rclcpp_components REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(image_transport REQUIRED)
+find_package(coresense_instrumentation_interfaces REQUIRED)
 
 set(dependencies
   rclcpp
@@ -21,6 +22,7 @@ set(dependencies
   std_msgs
   sensor_msgs
   image_transport
+  coresense_instrumentation_interfaces
 )
 
 include_directories(include)
