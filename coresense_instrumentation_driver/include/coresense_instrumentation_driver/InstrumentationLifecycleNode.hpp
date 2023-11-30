@@ -52,7 +52,7 @@ public:
 private:
   typename rclcpp::Subscription<TopicT>::SharedPtr sub_;
   typename rclcpp_lifecycle::LifecyclePublisher<TopicT>::SharedPtr pub_;
-  
+
   void handleCreatePublisherRequest(
     const std::shared_ptr<rmw_request_id_t> request_header,
     const std::shared_ptr<coresense_instrumentation_interfaces::srv::CreatePublisher::Request> request,
@@ -62,11 +62,14 @@ private:
     const std::shared_ptr<rmw_request_id_t> request_header,
     const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeletePublisher::Request> request,
     const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeletePublisher::Response> response);
-  
-  rclcpp::Service<coresense_instrumentation_interfaces::srv::CreatePublisher>::SharedPtr create_publisher_service_;
-  rclcpp::Service<coresense_instrumentation_interfaces::srv::DeletePublisher>::SharedPtr delete_publisher_service_;
 
-  std::unordered_map<std::string, typename rclcpp_lifecycle::LifecyclePublisher<TopicT>::SharedPtr> publishers_;
+  rclcpp::Service<coresense_instrumentation_interfaces::srv::CreatePublisher>::SharedPtr
+    create_publisher_service_;
+  rclcpp::Service<coresense_instrumentation_interfaces::srv::DeletePublisher>::SharedPtr
+    delete_publisher_service_;
+
+  std::unordered_map<std::string,
+    typename rclcpp_lifecycle::LifecyclePublisher<TopicT>::SharedPtr> publishers_;
 
   std::string topic_;
   std::string topic_type_;

@@ -68,13 +68,15 @@ InstrumentationLifecycleNode<TopicT>::on_configure(const rclcpp_lifecycle::State
 
   pub_ = this->create_publisher<TopicT>("/coresense" + topic_, 10);
 
-  create_publisher_service_ = this->create_service<coresense_instrumentation_interfaces::srv::CreatePublisher>(
+  create_publisher_service_ =
+    this->create_service<coresense_instrumentation_interfaces::srv::CreatePublisher>(
     "/coresense" + topic_ + "/create_publisher",
     std::bind(
       &InstrumentationLifecycleNode<TopicT>::handleCreatePublisherRequest, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
-  delete_publisher_service_ = this->create_service<coresense_instrumentation_interfaces::srv::DeletePublisher>(
+  delete_publisher_service_ =
+    this->create_service<coresense_instrumentation_interfaces::srv::DeletePublisher>(
     "/coresense" + topic_ + "/delete_publisher",
     std::bind(
       &InstrumentationLifecycleNode<TopicT>::handleDeletePublisherRequest, this,
