@@ -17,6 +17,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
+#include "lifecycle_msgs/msg/state.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "sensor_msgs/msg/image.hpp"
@@ -98,8 +99,24 @@ public:
 private:
   void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr & msg);
 
+  void handleCreatePublisherRequest(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<coresense_instrumentation_interfaces::srv::CreatePublisher::Request> request,
+    const std::shared_ptr<coresense_instrumentation_interfaces::srv::CreatePublisher::Response> response);
+
+  void handleDeletePublisherRequest(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeletePublisher::Request> request,
+    const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeletePublisher::Response> response);
+
+  rclcpp::Service<coresense_instrumentation_interfaces::srv::CreatePublisher>::SharedPtr
+    create_publisher_service_;
+  rclcpp::Service<coresense_instrumentation_interfaces::srv::DeletePublisher>::SharedPtr
+    delete_publisher_service_;
+
+  std::unordered_map<std::string, image_transport::Publisher> publishers_;
+
   rclcpp::Node::SharedPtr node_;
-  image_transport::Publisher pub_;
   image_transport::Subscriber sub_;
   std::string topic_;
   std::string topic_type_;

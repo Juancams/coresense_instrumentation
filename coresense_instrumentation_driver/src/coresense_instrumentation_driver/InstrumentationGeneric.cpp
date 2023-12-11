@@ -60,13 +60,19 @@ InstrumentationLifecycleNode<TopicT>::on_configure(const rclcpp_lifecycle::State
   sub_ = this->create_subscription<TopicT>(
     topic_, 10,
     [this](const typename TopicT::SharedPtr msg) {
-      if (pub_) {
-        // TODO: Publicar en todos los publicadores que haya en publishers_
-        pub_->publish(std::make_unique<TopicT>(*msg));
+      for (auto & pub : publishers_) {
+        if (pub.second->get_subscription_count() > 0 && pub.second->is_activated()) {
+          pub.second->publish(std::make_unique<TopicT>(*msg));
+        }
       }
     });
 
-  pub_ = this->create_publisher<TopicT>("/coresense" + topic_, 10);
+  if (topic_[0] == '/') {
+    topic_ = topic_.substr(1);
+  }
+
+  auto pub = this->create_publisher<TopicT>("/coresense/" + topic_, 10);
+  publishers_.insert({topic_, pub});
 
   create_publisher_service_ =
     this->create_service<coresense_instrumentation_interfaces::srv::CreatePublisher>(
@@ -89,8 +95,9 @@ template<typename TopicT>
 typename rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 InstrumentationLifecycleNode<TopicT>::on_activate(const rclcpp_lifecycle::State &)
 {
-  // TODO: Activar todos los publicadores que haya en publishers_
-  pub_->on_activate();
+  for (auto & pub : publishers_) {
+    pub.second->on_activate();
+  }
 
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
@@ -99,8 +106,9 @@ template<typename TopicT>
 typename rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 InstrumentationLifecycleNode<TopicT>::on_deactivate(const rclcpp_lifecycle::State &)
 {
-  // TODO: Desactivar todos los publicadores que haya en publishers_
-  pub_->on_deactivate();
+  for (auto & pub : publishers_) {
+    pub.second->on_deactivate();
+  }
 
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
@@ -109,8 +117,10 @@ template<typename TopicT>
 typename rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 InstrumentationLifecycleNode<TopicT>::on_cleanup(const rclcpp_lifecycle::State &)
 {
-  // TODO: Limpiar todos los publicadores que haya en publishers_
-  pub_.reset();
+  for (auto & pub : publishers_) {
+    pub.second.reset();
+  }
+
   sub_.reset();
 
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
@@ -120,8 +130,10 @@ template<typename TopicT>
 typename rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 InstrumentationLifecycleNode<TopicT>::on_shutdown(const rclcpp_lifecycle::State &)
 {
-  // TODO: Limpiar todos los publicadores que haya en publishers_
-  pub_.reset();
+  for (auto & pub : publishers_) {
+    pub.second.reset();
+  }
+
   sub_.reset();
 
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
@@ -137,12 +149,24 @@ void InstrumentationLifecycleNode<TopicT>::handleCreatePublisherRequest(
 
   std::string new_topic = request->topic_name;
 
-  // TODO: Mirar si el topic existe
-  // TODO: Mirar si el topic contiene o no la /
-  auto new_pub = this->create_publisher<TopicT>("/coresense" + new_topic, 10);
+  if (new_topic[0] == '/') {
+    new_topic = new_topic.substr(1);
+  }
+
+  for (auto & pub : publishers_) {
+    if (pub.first == new_topic) {
+      response->success = false;
+      return;
+    }
+  }
+
+  auto new_pub = this->create_publisher<TopicT>("/coresense/" + new_topic, 10);
+
+  if (this->get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+    new_pub->on_activate();
+  }
 
   publishers_.insert({new_topic, new_pub});
-
   response->success = true;
 }
 
@@ -156,11 +180,17 @@ void InstrumentationLifecycleNode<TopicT>::handleDeletePublisherRequest(
 
   std::string remove_topic = request->topic_name;
 
-  // TODO: Mirar si el topic existe
-  // TODO: Mirar si el topic contiene o no la /
+  if (remove_topic[0] == '/') {
+    remove_topic = remove_topic.substr(1);
+  }
+
+  for (auto & pub : publishers_) {
+    if (pub.first == remove_topic) {
+      pub.second.reset();
+    }
+  }
 
   publishers_.erase(remove_topic);
-
   response->success = true;
 }
 

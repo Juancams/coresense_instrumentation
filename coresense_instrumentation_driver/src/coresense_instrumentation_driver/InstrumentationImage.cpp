@@ -42,8 +42,10 @@ InstrumentationLifecycleNode<sensor_msgs::msg::Image>::~InstrumentationLifecycle
 void InstrumentationLifecycleNode<sensor_msgs::msg::Image>::imageCallback(
   const sensor_msgs::msg::Image::ConstSharedPtr & msg)
 {
-  if (pub_ && pub_.getNumSubscribers() > 0) {
-    pub_.publish(msg);
+  for (auto & pub : publishers_) {
+    if (pub.second.getNumSubscribers() > 0) {
+      pub.second.publish(msg);
+    }
   }
 }
 
@@ -69,7 +71,22 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 InstrumentationLifecycleNode<sensor_msgs::msg::Image>::on_activate(const rclcpp_lifecycle::State &)
 {
   image_transport::ImageTransport it(node_);
-  pub_ = it.advertise("/coresense" + topic_, 1);
+  auto pub = it.advertise("/coresense" + topic_, 1);
+  publishers_.insert({topic_, pub});
+
+  create_publisher_service_ =
+    this->create_service<coresense_instrumentation_interfaces::srv::CreatePublisher>(
+    "/coresense" + topic_ + "/create_publisher",
+    std::bind(
+      &InstrumentationLifecycleNode<sensor_msgs::msg::Image>::handleCreatePublisherRequest, this,
+      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+
+  delete_publisher_service_ =
+    this->create_service<coresense_instrumentation_interfaces::srv::DeletePublisher>(
+    "/coresense" + topic_ + "/delete_publisher",
+    std::bind(
+      &InstrumentationLifecycleNode<sensor_msgs::msg::Image>::handleDeletePublisherRequest, this,
+      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
@@ -78,6 +95,8 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 InstrumentationLifecycleNode<sensor_msgs::msg::Image>::on_deactivate(
   const rclcpp_lifecycle::State &)
 {
+  publishers_.erase(topic_);
+
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
@@ -101,6 +120,49 @@ std::string InstrumentationLifecycleNode<sensor_msgs::msg::Image>::get_topic()
 std::string InstrumentationLifecycleNode<sensor_msgs::msg::Image>::get_topic_type()
 {
   return topic_type_;
+}
+
+void InstrumentationLifecycleNode<sensor_msgs::msg::Image>::handleCreatePublisherRequest(
+  const std::shared_ptr<rmw_request_id_t> request_header,
+  const std::shared_ptr<coresense_instrumentation_interfaces::srv::CreatePublisher::Request> request,
+  const std::shared_ptr<coresense_instrumentation_interfaces::srv::CreatePublisher::Response> response)
+{
+  (void)request_header;
+
+  std::string new_topic = request->topic_name;
+
+  if (new_topic[0] == '/') {
+    new_topic = new_topic.substr(1);
+  }
+
+  for (auto & pub : publishers_) {
+    if (pub.first == new_topic) {
+      response->success = false;
+      return;
+    }
+  }
+
+  image_transport::ImageTransport it(node_);
+  auto new_pub = it.advertise("/coresense/" + new_topic, 1);
+  publishers_.insert({new_topic, new_pub});
+  response->success = true;
+}
+
+void InstrumentationLifecycleNode<sensor_msgs::msg::Image>::handleDeletePublisherRequest(
+  const std::shared_ptr<rmw_request_id_t> request_header,
+  const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeletePublisher::Request> request,
+  const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeletePublisher::Response> response)
+{
+  (void)request_header;
+
+  std::string remove_topic = request->topic_name;
+
+  if (remove_topic[0] == '/') {
+    remove_topic = remove_topic.substr(1);
+  }
+
+  publishers_.erase(remove_topic);
+  response->success = true;
 }
 
 } // namespace coresense_instrumentation_driver
