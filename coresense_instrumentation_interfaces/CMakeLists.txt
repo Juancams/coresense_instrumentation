@@ -12,6 +12,7 @@ find_package(std_msgs REQUIRED)
 find_package(lifecycle_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/NodeInfo.msg"
   "srv/CreatePublisher.srv"
   "srv/CreateSubscriber.srv"
   "srv/DeletePublisher.srv"
