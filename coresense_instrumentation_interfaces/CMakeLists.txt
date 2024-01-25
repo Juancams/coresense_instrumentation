@@ -9,11 +9,14 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(lifecycle_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/CreatePublisher.srv"
+  "srv/CreateSubscriber.srv"
   "srv/DeletePublisher.srv"
-  DEPENDENCIES std_msgs
+  "srv/DeleteSubscriber.srv"
+  DEPENDENCIES std_msgs lifecycle_msgs
 )
 
 if(BUILD_TESTING)
