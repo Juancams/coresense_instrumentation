@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INSTRUMENTATION_LIFECYCLE_NODE_HPP
-#define INSTRUMENTATION_LIFECYCLE_NODE_HPP
+#ifndef INSTRUMENTATION_PRODUCER_HPP
+#define INSTRUMENTATION_PRODUCER_HPP
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
@@ -22,8 +22,11 @@
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "image_transport/image_transport.hpp"
+#include "geometry_msgs/msg/twist.hpp"
 #include "coresense_instrumentation_interfaces/srv/create_publisher.hpp"
 #include "coresense_instrumentation_interfaces/srv/delete_publisher.hpp"
+#include "coresense_instrumentation_interfaces/msg/node_info.hpp"
+#include <cxxabi.h>
 
 namespace coresense_instrumentation_driver
 {
@@ -31,13 +34,13 @@ namespace coresense_instrumentation_driver
 using std::placeholders::_1;
 
 template<typename TopicT>
-class InstrumentationLifecycleNode : public rclcpp_lifecycle::LifecycleNode
+class InstrumentationProducer : public rclcpp_lifecycle::LifecycleNode
 {
 public:
-  InstrumentationLifecycleNode(
+  InstrumentationProducer(
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
-  virtual ~InstrumentationLifecycleNode();
+  virtual ~InstrumentationProducer();
 
   std::string get_topic();
   std::string get_topic_type();
@@ -52,7 +55,8 @@ public:
 
 private:
   typename rclcpp::Subscription<TopicT>::SharedPtr sub_;
-  typename rclcpp_lifecycle::LifecyclePublisher<TopicT>::SharedPtr pub_;
+  rclcpp::Publisher<coresense_instrumentation_interfaces::msg::NodeInfo>::SharedPtr status_pub_;
+  rclcpp::TimerBase::SharedPtr status_timer_;
 
   void handleCreatePublisherRequest(
     const std::shared_ptr<rmw_request_id_t> request_header,
@@ -63,6 +67,8 @@ private:
     const std::shared_ptr<rmw_request_id_t> request_header,
     const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeletePublisher::Request> request,
     const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeletePublisher::Response> response);
+
+  void publish_status();
 
   rclcpp::Service<coresense_instrumentation_interfaces::srv::CreatePublisher>::SharedPtr
     create_publisher_service_;
@@ -77,13 +83,13 @@ private:
 };
 
 template<>
-class InstrumentationLifecycleNode<sensor_msgs::msg::Image>: public rclcpp_lifecycle::LifecycleNode
+class InstrumentationProducer<sensor_msgs::msg::Image>: public rclcpp_lifecycle::LifecycleNode
 {
 public:
-  InstrumentationLifecycleNode(
+  InstrumentationProducer(
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
-  virtual ~InstrumentationLifecycleNode();
+  virtual ~InstrumentationProducer();
 
   using CallbackReturnT = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
@@ -97,6 +103,9 @@ public:
   std::string get_topic_type();
 
 private:
+  rclcpp::Publisher<coresense_instrumentation_interfaces::msg::NodeInfo>::SharedPtr status_pub_;
+  rclcpp::TimerBase::SharedPtr status_timer_;
+
   void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr & msg);
 
   void handleCreatePublisherRequest(
@@ -108,6 +117,8 @@ private:
     const std::shared_ptr<rmw_request_id_t> request_header,
     const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeletePublisher::Request> request,
     const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeletePublisher::Response> response);
+
+  void publish_status();
 
   rclcpp::Service<coresense_instrumentation_interfaces::srv::CreatePublisher>::SharedPtr
     create_publisher_service_;
@@ -124,4 +135,4 @@ private:
 
 } // namespace coresense_instrumentation_driver
 
-#endif // INSTRUMENTATION_LIFECYCLE_NODE_HPP
+#endif // INSTRUMENTATION_PRODUCER_HPP
