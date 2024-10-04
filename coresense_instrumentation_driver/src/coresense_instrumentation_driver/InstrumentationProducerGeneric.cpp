@@ -25,15 +25,59 @@ template class coresense_instrumentation_driver::InstrumentationProducer<geometr
 template<typename TopicT>
 InstrumentationProducer<TopicT>::InstrumentationProducer(
   const rclcpp::NodeOptions & options)
-: rclcpp_lifecycle::LifecycleNode("lifecycle_node", "", options)
+: rclcpp_lifecycle::LifecycleNode("lifecycle_node", "", options), qos_profile_(rclcpp::QoS(10)) 
 {
   declare_parameter("topic", std::string(""));
   declare_parameter("topic_type", std::string(""));
   declare_parameter("type", std::string(""));
+  declare_parameter("queue_history", std::string("KEEP_LAST"));
+  declare_parameter("qos_queue", int(10));
+  declare_parameter("qos_reliability", std::string("RELIABLE"));
+  declare_parameter("qos_durability", std::string("VOLATILE"));
+  declare_parameter("topic_name", std::string(""));
 
   get_parameter("topic", topic_);
   get_parameter("topic_type", topic_type_);
   get_parameter("type", type_);
+  get_parameter("topic_name", topic_name_);
+
+  std::string queue_history;
+  get_parameter("queue_history", queue_history);
+
+  if (queue_history == "KEEP_LAST") {
+    int qos_queue;
+    get_parameter("qos_queue", qos_queue);
+    qos_profile_ = rclcpp::QoS(rclcpp::KeepLast(qos_queue));
+  } else if (queue_history == "KEEP_ALL") {
+    qos_profile_ = rclcpp::QoS(rclcpp::KeepAll());
+  } else {
+    RCLCPP_ERROR(get_logger(), "Invalid queue history");
+    return;
+  }
+
+  std::string qos_reliability;
+  get_parameter("qos_reliability", qos_reliability);
+  
+  if (qos_reliability == "RELIABLE") {
+    qos_profile_.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+  } else if (qos_reliability == "BEST_EFFORT") {
+    qos_profile_.reliability(RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT);
+  } else {
+    RCLCPP_ERROR(get_logger(), "Invalid reliability");
+    return;
+  }
+
+  std::string qos_durability;
+  get_parameter("qos_durability", qos_durability);
+
+  if (qos_durability == "VOLATILE") {
+    qos_profile_.durability(RMW_QOS_POLICY_DURABILITY_VOLATILE);
+  } else if (qos_durability == "TRANSIENT_LOCAL") {
+    qos_profile_.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+  } else {
+    RCLCPP_ERROR(get_logger(), "Invalid durability");
+    return;
+  }
 
   status_pub_ = this->create_publisher<coresense_instrumentation_interfaces::msg::NodeInfo>(
     "/status", 10);
@@ -120,19 +164,25 @@ InstrumentationProducer<TopicT>::on_configure(const rclcpp_lifecycle::State &)
       }
     });
 
-  if (topic_[0] == '/') {
-    topic_ = topic_.substr(1);
-  }
-
   std::string topic;
 
-  if (std::string(this->get_namespace()) == "/") {
-    topic = "/coresense/" + topic_;
-  } else {
-    topic = std::string(this->get_namespace()) + "/coresense/" + topic_;
+  if (topic_name_ != "/") {
+    if (topic_name_[0] == '/') {
+      topic = topic_name_.substr(1);
+    } else {
+      topic = topic_name_;
+    }
+  } else if (topic_[0] == '/') {
+    topic = topic_.substr(1);
   }
 
-  auto pub = this->create_publisher<TopicT>(topic, 10);
+  if (std::string(this->get_namespace()) == "/") {
+    topic = "/coresense/" + topic;
+  } else {
+    topic = std::string(this->get_namespace()) + "/coresense/" + topic;
+  }
+
+  auto pub = this->create_publisher<TopicT>(topic, qos_profile_);
   publishers_.insert({topic, pub});
 
   std::string create_service, delete_service;
@@ -241,7 +291,7 @@ void InstrumentationProducer<TopicT>::handleCreatePublisherRequest(
     }
   }
 
-  auto new_pub = this->create_publisher<TopicT>(new_topic, 10);
+  auto new_pub = this->create_publisher<TopicT>(new_topic, qos_profile_);
 
   if (this->get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
     new_pub->on_activate();

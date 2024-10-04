@@ -32,6 +32,13 @@ InstrumentationProducer<sensor_msgs::msg::Image>::InstrumentationProducer(
   get_parameter("type", type_);
 
   node_ = rclcpp::Node::make_shared("subnode");
+  executor_ = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+  executor_->add_node(node_);
+
+  thread_ = std::make_unique<std::thread>(
+    [&]() {
+      executor_->spin();
+    });
 
   status_pub_ = this->create_publisher<coresense_instrumentation_interfaces::msg::NodeInfo>(
     "/status", 10);
@@ -48,13 +55,14 @@ InstrumentationProducer<sensor_msgs::msg::Image>::InstrumentationProducer(
 InstrumentationProducer<sensor_msgs::msg::Image>::~InstrumentationProducer()
 {
   RCLCPP_DEBUG(get_logger(), "Destroying InstrumentationImage");
+  executor_->cancel();
+  thread_->join();
 }
 
 void InstrumentationProducer<sensor_msgs::msg::Image>::publish_status()
 {
   auto status_msg = std::make_unique<coresense_instrumentation_interfaces::msg::NodeInfo>();
   auto lifecycle_state = get_current_state();
-  rclcpp::spin_some(node_);
 
   if (std::string(this->get_namespace()) == "/") {
     status_msg->node_name = get_name();
@@ -127,20 +135,26 @@ InstrumentationProducer<sensor_msgs::msg::Image>::on_activate(const rclcpp_lifec
   std::string topic;
   std::string create_service, delete_service;
 
-  if (topic_[0] == '/') {
-    topic_ = topic_.substr(1);
+  if (topic_name_ != "/") {
+    if (topic_name_[0] == '/') {
+      topic = topic_name_.substr(1);
+    } else {
+      topic = topic_name_;
+    }
+  } else if (topic_[0] == '/') {
+    topic = topic_.substr(1);
   }
 
   if (std::string(this->get_namespace()) == "/") {
     create_service = std::string(this->get_name()) + "/create_publisher";
     delete_service = std::string(this->get_name()) + "/delete_publisher";
-    topic = "/coresense/" + topic_;
+    topic = "/coresense/" + topic;
   } else {
     create_service = std::string(this->get_namespace()) + "/" + this->get_name() +
       "/create_publisher";
     delete_service = std::string(this->get_namespace()) + "/" + this->get_name() +
       "/delete_publisher";
-    topic = std::string(this->get_namespace()) + "/coresense/" + topic_;
+    topic = std::string(this->get_namespace()) + "/coresense/" + topic;
   }
 
   auto pub = it.advertise(topic, 1);

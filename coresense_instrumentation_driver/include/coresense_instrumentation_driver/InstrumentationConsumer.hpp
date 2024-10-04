@@ -59,6 +59,7 @@ private:
   typename rclcpp_lifecycle::LifecyclePublisher<TopicT>::SharedPtr pub_;
   rclcpp::Publisher<coresense_instrumentation_interfaces::msg::NodeInfo>::SharedPtr status_pub_;
   rclcpp::TimerBase::SharedPtr status_timer_;
+  rclcpp::QoS qos_profile_;
 
   void handleCreateSubscriberRequest(
     const std::shared_ptr<rmw_request_id_t> request_header,
@@ -83,6 +84,7 @@ private:
   std::string topic_;
   std::string topic_type_;
   std::string type_;
+  std::string topic_name_;
 };
 
 } // namespace coresense_instrumentation_driver
