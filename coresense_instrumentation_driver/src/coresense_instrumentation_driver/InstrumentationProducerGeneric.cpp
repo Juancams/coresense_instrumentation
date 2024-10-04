@@ -272,7 +272,42 @@ void InstrumentationProducer<TopicT>::handleCreatePublisherRequest(
 {
   (void)request_header;
 
+  std::string qos_history = request->qos_history;
+  int qos_queue = request->qos_queue;
+  std::string qos_reliability = request->qos_reliability;
+  std::string qos_durability = request->qos_durability;
   std::string new_topic = request->topic_name;
+  rclcpp::QoS qos_profile = rclcpp::QoS(10);
+
+  if (qos_history == "KEEP_LAST" || qos_history == "") {
+    qos_profile = rclcpp::QoS(rclcpp::KeepLast(qos_queue));
+  } else if (qos_history == "KEEP_ALL") {
+    qos_profile = rclcpp::QoS(rclcpp::KeepAll());
+  } else {
+    response->success = false;
+    response->message = "Invalid queue history. Must be KEEP_LAST or KEEP_ALL";
+    return;
+  }
+
+  if (qos_reliability == "RELIABLE" || qos_reliability == "") {
+    qos_profile.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+  } else if (qos_reliability == "BEST_EFFORT") {
+    qos_profile.reliability(RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT);
+  } else {
+    response->success = false;
+    response->message = "Invalid reliability. Must be RELIABLE or BEST_EFFORT";
+    return;
+  }
+
+  if (qos_durability == "VOLATILE" || qos_durability == "") {
+    qos_profile.durability(RMW_QOS_POLICY_DURABILITY_VOLATILE);
+  } else if (qos_durability == "TRANSIENT_LOCAL") {
+    qos_profile.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+  } else {
+    response->success = false;
+    response->message = "Invalid durability. Must be VOLATILE or TRANSIENT_LOCAL";
+    return;
+  }
 
   if (new_topic[0] == '/') {
     new_topic = new_topic.substr(1);
@@ -287,11 +322,12 @@ void InstrumentationProducer<TopicT>::handleCreatePublisherRequest(
   for (auto & pub : publishers_) {
     if (pub.first == new_topic) {
       response->success = false;
+      response->message = "Topic already exists.";
       return;
     }
   }
 
-  auto new_pub = this->create_publisher<TopicT>(new_topic, qos_profile_);
+  auto new_pub = this->create_publisher<TopicT>(new_topic, qos_profile);
 
   if (this->get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
     new_pub->on_activate();
@@ -299,6 +335,7 @@ void InstrumentationProducer<TopicT>::handleCreatePublisherRequest(
 
   publishers_.insert({new_topic, new_pub});
   response->success = true;
+  response->message = "Publisher created.";
 }
 
 template<typename TopicT>

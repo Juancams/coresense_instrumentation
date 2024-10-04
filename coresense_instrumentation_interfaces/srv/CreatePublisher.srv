@@ -1,4 +1,9 @@
 string topic_name
+string qos_history "KEEP_LAST"
+int32 qos_queue 10
+string qos_reliability "RELIABLE"
+string qos_durability "VOLATILE"
 
 ---
 bool success
+string message
