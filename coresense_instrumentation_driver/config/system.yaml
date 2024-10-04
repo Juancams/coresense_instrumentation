@@ -6,8 +6,8 @@ nodes:
     qos_profile:
       qos_history: KEEP_LAST
       qos_queue: 100
-      qos_reliability: RELIABLE
-      qos_durability: VOLATILE
+      qos_reliability: BEST_EFFORT
+      qos_durability: TRANSIENT_LOCAL
     topic_name: my_scan
   - name: nav_vel
     topic: /nav_vel

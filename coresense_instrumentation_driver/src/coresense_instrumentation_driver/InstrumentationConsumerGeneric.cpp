@@ -57,7 +57,7 @@ InstrumentationConsumer<TopicT>::InstrumentationConsumer(
 
   std::string qos_reliability;
   get_parameter("qos_reliability", qos_reliability);
-  
+
   if (qos_reliability == "REALIABLE") {
     qos_profile_.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
   } else if (qos_reliability == "BEST_EFFORT") {
@@ -158,7 +158,7 @@ InstrumentationConsumer<TopicT>::on_configure(const rclcpp_lifecycle::State &)
 
   std::string topic;
 
-  if (topic_name_ != "/") {
+  if (topic_name_ != "") {
     if (topic_name_[0] == '/') {
       topic = topic_name_.substr(1);
     } else {
@@ -264,8 +264,10 @@ InstrumentationConsumer<TopicT>::on_shutdown(const rclcpp_lifecycle::State &)
 template<typename TopicT>
 void InstrumentationConsumer<TopicT>::handleCreateSubscriberRequest(
   const std::shared_ptr<rmw_request_id_t> request_header,
-  const std::shared_ptr<coresense_instrumentation_interfaces::srv::CreateSubscriber::Request> request,
-  const std::shared_ptr<coresense_instrumentation_interfaces::srv::CreateSubscriber::Response> response)
+  const std::shared_ptr<coresense_instrumentation_interfaces::srv::CreateSubscriber::Request>
+  request,
+  const std::shared_ptr<coresense_instrumentation_interfaces::srv::CreateSubscriber::Response>
+  response)
 {
   (void)request_header;
 
@@ -306,7 +308,6 @@ void InstrumentationConsumer<TopicT>::handleCreateSubscriberRequest(
     return;
   }
 
-
   if (new_topic[0] == '/') {
     new_topic = new_topic.substr(1);
   }
@@ -339,8 +340,10 @@ void InstrumentationConsumer<TopicT>::handleCreateSubscriberRequest(
 template<typename TopicT>
 void InstrumentationConsumer<TopicT>::handleDeleteSubscriberRequest(
   const std::shared_ptr<rmw_request_id_t> request_header,
-  const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeleteSubscriber::Request> request,
-  const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeleteSubscriber::Response> response)
+  const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeleteSubscriber::Request>
+  request,
+  const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeleteSubscriber::Response>
+  response)
 {
   (void)request_header;
 

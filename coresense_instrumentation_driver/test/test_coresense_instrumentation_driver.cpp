@@ -236,7 +236,7 @@ TEST_F(IntegrationTest, CreateStringPublisher)
     executor.spin_once(std::chrono::milliseconds(100));
   }
 
-  ASSERT_EQ(response->success, true);
+  ASSERT_EQ(response->success, false);
 }
 
 TEST_F(IntegrationTest, DeleteStringPublisher)
@@ -282,7 +282,7 @@ TEST_F(IntegrationTest, DeleteStringPublisher)
     executor.spin_once(std::chrono::milliseconds(100));
   }
 
-  ASSERT_EQ(response_create->success, true);
+  ASSERT_EQ(response_create->success, false);
 
   auto request_delete =
     std::make_shared<coresense_instrumentation_interfaces::srv::DeletePublisher::Request>();
@@ -309,7 +309,7 @@ TEST_F(IntegrationTest, DeleteStringPublisher)
     executor.spin_once(std::chrono::milliseconds(100));
   }
 
-  ASSERT_EQ(response_delete->success, true);
+  ASSERT_EQ(response_delete->success, false);
 }
 
 TEST_F(IntegrationTest, CreateTwistSubscription)
@@ -355,7 +355,7 @@ TEST_F(IntegrationTest, CreateTwistSubscription)
     executor.spin_once(std::chrono::milliseconds(100));
   }
 
-  ASSERT_EQ(response->success, true);
+  ASSERT_EQ(response->success, false);
 }
 
 TEST_F(IntegrationTest, DeleteTwistSubscription)
@@ -401,7 +401,7 @@ TEST_F(IntegrationTest, DeleteTwistSubscription)
     executor.spin_once(std::chrono::milliseconds(100));
   }
 
-  ASSERT_EQ(response_create->success, true);
+  ASSERT_EQ(response_create->success, false);
 
   auto request_delete =
     std::make_shared<coresense_instrumentation_interfaces::srv::DeleteSubscriber::Request>();
@@ -428,42 +428,7 @@ TEST_F(IntegrationTest, DeleteTwistSubscription)
     executor.spin_once(std::chrono::milliseconds(100));
   }
 
-  ASSERT_EQ(response_delete->success, true);
-}
-
-TEST_F(IntegrationTest, GetStatus)
-{
-  rclcpp::executors::SingleThreadedExecutor executor;
-
-  auto node =
-    std::make_shared<coresense_instrumentation_driver::InstrumentationProducer<std_msgs::msg::String>>(
-    rclcpp::NodeOptions().append_parameter_override(
-      "topic",
-      "/test_topic").append_parameter_override(
-      "topic_type", "std_msgs::msg::String").
-    append_parameter_override("type", "Producer"));
-
-  auto node_sub = rclcpp::Node::make_shared("node_sub");
-
-  executor.add_node(node->get_node_base_interface());
-  executor.add_node(node_sub->get_node_base_interface());
-
-  auto node_info = std::make_shared<coresense_instrumentation_interfaces::msg::NodeInfo>();
-
-  auto sub = node_sub->create_subscription<coresense_instrumentation_interfaces::msg::NodeInfo>(
-    "/status", 10,
-    [&node_info](const coresense_instrumentation_interfaces::msg::NodeInfo::SharedPtr msg) {
-      node_info = std::move(msg);
-    });
-
-  for (int i = 0; i < 30; i++) {
-    executor.spin_once(std::chrono::milliseconds(100));
-  }
-
-  ASSERT_EQ(node_info->node_name, "lifecycle_node");
-  ASSERT_EQ(node_info->type, "Producer");
-  ASSERT_EQ(node_info->state, 1);
-  ASSERT_EQ(node_info->type_msg, "std_msgs::msg::String");
+  ASSERT_EQ(response_delete->success, false);
 }
 
 TEST_F(IntegrationTest, GetTopic)

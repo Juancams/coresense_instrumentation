@@ -25,7 +25,7 @@ template class coresense_instrumentation_driver::InstrumentationProducer<geometr
 template<typename TopicT>
 InstrumentationProducer<TopicT>::InstrumentationProducer(
   const rclcpp::NodeOptions & options)
-: rclcpp_lifecycle::LifecycleNode("lifecycle_node", "", options), qos_profile_(rclcpp::QoS(10)) 
+: rclcpp_lifecycle::LifecycleNode("lifecycle_node", "", options), qos_profile_(rclcpp::QoS(10))
 {
   declare_parameter("topic", std::string(""));
   declare_parameter("topic_type", std::string(""));
@@ -57,7 +57,7 @@ InstrumentationProducer<TopicT>::InstrumentationProducer(
 
   std::string qos_reliability;
   get_parameter("qos_reliability", qos_reliability);
-  
+
   if (qos_reliability == "RELIABLE") {
     qos_profile_.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
   } else if (qos_reliability == "BEST_EFFORT") {
@@ -166,7 +166,7 @@ InstrumentationProducer<TopicT>::on_configure(const rclcpp_lifecycle::State &)
 
   std::string topic;
 
-  if (topic_name_ != "/") {
+  if (topic_name_ != "") {
     if (topic_name_[0] == '/') {
       topic = topic_name_.substr(1);
     } else {
@@ -268,7 +268,8 @@ template<typename TopicT>
 void InstrumentationProducer<TopicT>::handleCreatePublisherRequest(
   const std::shared_ptr<rmw_request_id_t> request_header,
   const std::shared_ptr<coresense_instrumentation_interfaces::srv::CreatePublisher::Request> request,
-  const std::shared_ptr<coresense_instrumentation_interfaces::srv::CreatePublisher::Response> response)
+  const std::shared_ptr<coresense_instrumentation_interfaces::srv::CreatePublisher::Response>
+  response)
 {
   (void)request_header;
 
@@ -342,7 +343,8 @@ template<typename TopicT>
 void InstrumentationProducer<TopicT>::handleDeletePublisherRequest(
   const std::shared_ptr<rmw_request_id_t> request_header,
   const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeletePublisher::Request> request,
-  const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeletePublisher::Response> response)
+  const std::shared_ptr<coresense_instrumentation_interfaces::srv::DeletePublisher::Response>
+  response)
 {
   (void)request_header;
 
