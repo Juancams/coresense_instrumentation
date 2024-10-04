@@ -30,7 +30,7 @@ InstrumentationConsumer<TopicT>::InstrumentationConsumer(
   declare_parameter("topic", std::string(""));
   declare_parameter("topic_type", std::string(""));
   declare_parameter("type", std::string(""));
-  declare_parameter("queue_history", std::string("KEEP_LAST"));
+  declare_parameter("qos_history", std::string("KEEP_LAST"));
   declare_parameter("qos_queue", int(10));
   declare_parameter("qos_reliability", std::string("REALIABLE"));
   declare_parameter("qos_durability", std::string("VOLATILE"));
@@ -41,14 +41,14 @@ InstrumentationConsumer<TopicT>::InstrumentationConsumer(
   get_parameter("type", type_);
   get_parameter("topic_name", topic_name_);
 
-  std::string queue_history;
-  get_parameter("queue_history", queue_history);
+  std::string qos_history;
+  get_parameter("qos_history", qos_history);
 
-  if (queue_history == "KEEP_LAST") {
+  if (qos_history == "KEEP_LAST") {
     int qos_queue;
     get_parameter("qos_queue", qos_queue);
     qos_profile_ = rclcpp::QoS(rclcpp::KeepLast(qos_queue));
-  } else if (queue_history == "KEEP_ALL") {
+  } else if (qos_history == "KEEP_ALL") {
     qos_profile_ = rclcpp::QoS(rclcpp::KeepAll());
   } else {
     RCLCPP_ERROR(get_logger(), "Invalid queue history");
