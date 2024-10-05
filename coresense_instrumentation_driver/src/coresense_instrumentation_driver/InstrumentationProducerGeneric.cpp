@@ -130,14 +130,17 @@ void InstrumentationProducer<TopicT>::publish_status()
     auto qos = qos_map_.find(entry.first);
 
     if (qos != qos_map_.end()) {
-      status_msg->qos_history.push_back(qos->second.get_rmw_qos_profile().history ==
+      status_msg->qos_history.push_back(
+          qos->second.get_rmw_qos_profile().history ==
           RMW_QOS_POLICY_HISTORY_KEEP_LAST ?
           "KEEP_LAST" : "KEEP_ALL");
       status_msg->qos_queue.push_back(qos->second.get_rmw_qos_profile().depth);
-      status_msg->qos_reliability.push_back(qos->second.get_rmw_qos_profile().reliability ==
+      status_msg->qos_reliability.push_back(
+          qos->second.get_rmw_qos_profile().reliability ==
           RMW_QOS_POLICY_RELIABILITY_RELIABLE ?
           "RELIABLE" : "BEST_EFFORT");
-      status_msg->qos_durability.push_back(qos->second.get_rmw_qos_profile().durability ==
+      status_msg->qos_durability.push_back(
+          qos->second.get_rmw_qos_profile().durability ==
           RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL ?
           "TRANSIENT_LOCAL" : "VOLATILE");
     }
