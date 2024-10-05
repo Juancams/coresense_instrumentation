@@ -328,7 +328,12 @@ void CoresensePanel::create_subscriber(
     service_name);
   auto request =
     std::make_shared<coresense_instrumentation_interfaces::srv::CreateSubscriber::Request>();
+
   request->topic_name = topic_name;
+  request->qos_history = qos_history_->currentText().toStdString();
+  request->qos_queue = qos_queue_->value();
+  request->qos_reliability = qos_reliability_->currentText().toStdString();
+  request->qos_durability = qos_durability_->currentText().toStdString();
 
   auto result = client->async_send_request(request);
 }
