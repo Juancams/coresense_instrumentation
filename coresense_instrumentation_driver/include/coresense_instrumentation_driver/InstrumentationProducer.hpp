@@ -83,6 +83,8 @@ private:
   std::unordered_map<std::string,
     typename rclcpp_lifecycle::LifecyclePublisher<TopicT>::SharedPtr> publishers_;
 
+  std::unordered_map<std::string, rclcpp::QoS> qos_map_;
+
   std::string topic_;
   std::string topic_type_;
   std::string type_;

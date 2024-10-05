@@ -4,3 +4,7 @@ string type_msg
 string type
 builtin_interfaces/Time stamp
 string[] topics
+string[] qos_history
+int32[] qos_queue
+string[] qos_reliability
+string[] qos_durability

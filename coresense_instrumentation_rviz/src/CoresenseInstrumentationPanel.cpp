@@ -63,7 +63,7 @@ CoresensePanel::CoresensePanel(QWidget * parent)
   create_node_layout();
 
   connect(
-    tree_widget_, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this,
+    tree_widget_, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, // NOLINT
     SLOT(show_info(QTreeWidgetItem*)));
 
   setLayout(layout_);
@@ -129,6 +129,14 @@ void CoresensePanel::statusCallback(
 
     if (topic_map_[msg->node_name] != msg->topics) {
       topic_map_[msg->node_name] = msg->topics;
+
+      for (std::size_t i = 0; i < msg->topics.size(); i++) {
+        qos_history_map_.insert({msg->topics[i], msg->qos_history[i]});
+        qos_queue_map_.insert({msg->topics[i], msg->qos_queue[i]});
+        qos_reliability_map_.insert({msg->topics[i], msg->qos_reliability[i]});
+        qos_durability_map_.insert({msg->topics[i], msg->qos_durability[i]});
+      }
+
       QTreeWidgetItem * selectedItem = tree_widget_->currentItem();
       QTimer::singleShot(
         0, this, [this, selectedItem]() {
@@ -155,6 +163,32 @@ CoresensePanel::create_node_layout()
   line_edit_topic_ = new QLineEdit();
   layout->addWidget(line_edit_topic_);
 
+  QHBoxLayout * qosLayout = new QHBoxLayout();
+  QHBoxLayout * qosLayout2 = new QHBoxLayout();
+
+  qos_history_ = new QComboBox();
+  qos_history_->addItem("KEEP_LAST");
+  qos_history_->addItem("KEEP_ALL");
+  qosLayout->addWidget(qos_history_);
+
+  qos_reliability_ = new QComboBox();
+  qos_reliability_->addItem("RELIABLE");
+  qos_reliability_->addItem("BEST_EFFORT");
+  qosLayout2->addWidget(qos_reliability_);
+
+  qos_durability_ = new QComboBox();
+  qos_durability_->addItem("VOLATILE");
+  qos_durability_->addItem("TRANSIENT_LOCAL");
+  qosLayout2->addWidget(qos_durability_);
+
+  qos_queue_ = new QSpinBox();
+  qos_queue_->setRange(0, 100000);
+  qos_queue_->setValue(10);
+  qosLayout->addWidget(qos_queue_);
+
+  layout->addLayout(qosLayout);
+  layout->addLayout(qosLayout2);
+
   QHBoxLayout * createDeleteLayout = new QHBoxLayout();
   button_create_ = new QPushButton("Create");
   button_delete_ = new QPushButton("Delete");
@@ -163,9 +197,12 @@ CoresensePanel::create_node_layout()
   layout->addLayout(createDeleteLayout);
 
   topic_box_ = new QTreeWidget();
-  topic_box_->setColumnCount(1);
-  topic_box_->setHeaderLabels({"Topic"});
+  topic_box_->setColumnCount(4);
+  topic_box_->setHeaderLabels({"Topic", "History", "Reliability", "Durability"});
   topic_box_->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+  topic_box_->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+  topic_box_->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+  topic_box_->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
 
   layout->addWidget(topic_box_);
 
@@ -221,6 +258,18 @@ CoresensePanel::show_info(QTreeWidgetItem * item)
   for (const auto & topic : topic_map_[node_name]) {
     QTreeWidgetItem * item = new QTreeWidgetItem(topic_box_);
     item->setText(0, QString::fromStdString(topic));
+
+    if (qos_history_map_[topic] == "KEEP_LAST") {
+      item->setText(1,
+          QString::fromStdString(std::string(qos_history_map_[topic]) + " (" +
+          std::to_string(qos_queue_map_[topic]) + ")"));
+    } else {
+      item->setText(1, QString::fromStdString(qos_history_map_[topic]));
+    }
+
+    item->setText(2, QString::fromStdString(qos_reliability_map_[topic]));
+    item->setText(3, QString::fromStdString(qos_durability_map_[topic]));
+    item->setText(4, QString::number(qos_queue_map_[topic]));
   }
 }
 
@@ -259,7 +308,12 @@ void CoresensePanel::create_publisher(const std::string & node_name, const std::
     service_name);
   auto request =
     std::make_shared<coresense_instrumentation_interfaces::srv::CreatePublisher::Request>();
+
   request->topic_name = topic_name;
+  request->qos_history = qos_history_->currentText().toStdString();
+  request->qos_queue = qos_queue_->value();
+  request->qos_reliability = qos_reliability_->currentText().toStdString();
+  request->qos_durability = qos_durability_->currentText().toStdString();
 
   auto result = client->async_send_request(request);
 }
@@ -367,6 +421,7 @@ void CoresensePanel::check_alive()
       if (it != nodes_.end()) {
         for (int i = 0; i < tree_widget_->topLevelItemCount(); ++i) {
           QTreeWidgetItem * item = tree_widget_->topLevelItem(i);
+
           if (item->text(0).toStdString() == node_name) {
             update_state(item, node_name, lifecycle_msgs::msg::State::PRIMARY_STATE_UNKNOWN);
 

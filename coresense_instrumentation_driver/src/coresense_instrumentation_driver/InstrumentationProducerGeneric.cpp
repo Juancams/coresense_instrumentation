@@ -126,6 +126,21 @@ void InstrumentationProducer<TopicT>::publish_status()
 
   for (const auto & entry : publishers_) {
     status_msg->topics.push_back(entry.first);
+
+    auto qos = qos_map_.find(entry.first);
+
+    if (qos != qos_map_.end()) {
+      status_msg->qos_history.push_back(qos->second.get_rmw_qos_profile().history ==
+          RMW_QOS_POLICY_HISTORY_KEEP_LAST ?
+          "KEEP_LAST" : "KEEP_ALL");
+      status_msg->qos_queue.push_back(qos->second.get_rmw_qos_profile().depth);
+      status_msg->qos_reliability.push_back(qos->second.get_rmw_qos_profile().reliability ==
+          RMW_QOS_POLICY_RELIABILITY_RELIABLE ?
+          "RELIABLE" : "BEST_EFFORT");
+      status_msg->qos_durability.push_back(qos->second.get_rmw_qos_profile().durability ==
+          RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL ?
+          "TRANSIENT_LOCAL" : "VOLATILE");
+    }
   }
 
   int status;
@@ -184,6 +199,7 @@ InstrumentationProducer<TopicT>::on_configure(const rclcpp_lifecycle::State &)
 
   auto pub = this->create_publisher<TopicT>(topic, qos_profile_);
   publishers_.insert({topic, pub});
+  qos_map_.insert({topic, qos_profile_});
 
   std::string create_service, delete_service;
 
@@ -335,6 +351,8 @@ void InstrumentationProducer<TopicT>::handleCreatePublisherRequest(
   }
 
   publishers_.insert({new_topic, new_pub});
+  qos_map_.insert({new_topic, qos_profile});
+
   response->success = true;
   response->message = "Publisher created.";
 }
@@ -361,6 +379,8 @@ void InstrumentationProducer<TopicT>::handleDeletePublisherRequest(
   }
 
   publishers_.erase(remove_topic);
+  qos_map_.erase(remove_topic);
+
   response->success = true;
 }
 

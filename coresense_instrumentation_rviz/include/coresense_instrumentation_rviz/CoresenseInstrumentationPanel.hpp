@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CORESENSE_INSTRUMENTATION_RVIZ__CORESENSE_INSTRUMENTATION_PANEL_HPP_
-#define CORESENSE_INSTRUMENTATION_RVIZ__CORESENSE_INSTRUMENTATION_PANEL_HPP_
+#ifndef CORESENSE_INSTRUMENTATION_RVIZ__CORESENSEINSTRUMENTATIONPANEL_HPP_
+#define CORESENSE_INSTRUMENTATION_RVIZ__CORESENSEINSTRUMENTATIONPANEL_HPP_
 
 #include <QtWidgets>
 #include <QLabel>
@@ -35,6 +35,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
@@ -77,6 +78,10 @@ protected:
   QLineEdit * line_edit_topic_;
   QTreeWidget * topic_box_;
   QLabel * type_label_;
+  QComboBox * qos_history_;
+  QComboBox * qos_reliability_;
+  QComboBox * qos_durability_;
+  QSpinBox * qos_queue_;
 
 private slots:
   void show_info(QTreeWidgetItem * item);
@@ -99,6 +104,10 @@ private:
   rclcpp::TimerBase::SharedPtr alive_timer_;
   std::map<std::string, std::uint8_t> state_map_;
   std::map<std::string, std::vector<std::string>> topic_map_;
+  std::map<std::string, std::string> qos_history_map_;
+  std::map<std::string, int> qos_queue_map_;
+  std::map<std::string, std::string> qos_reliability_map_;
+  std::map<std::string, std::string> qos_durability_map_;
   std::map<std::string, builtin_interfaces::msg::Time> time_map_;
   std::vector<std::string> nodes_;
   std::thread spin_thread_;
@@ -106,4 +115,4 @@ private:
 
 }  // namespace coresense_instrumentation_rviz
 
-#endif  //  CORESENSE_INSTRUMENTATION_RVIZ__CORESENSE_INSTRUMENTATION_PANEL_HPP_
+#endif  //  CORESENSE_INSTRUMENTATION_RVIZ__CORESENSEINSTRUMENTATIONPANEL_HPP_

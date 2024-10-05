@@ -75,6 +75,11 @@ void InstrumentationProducer<sensor_msgs::msg::Image>::publish_status()
 
   for (const auto & entry : publishers_) {
     status_msg->topics.push_back(entry.first);
+
+    status_msg->qos_history.push_back("KEEP_LAST");
+    status_msg->qos_queue.push_back(1);
+    status_msg->qos_reliability.push_back("RELIABLE");
+    status_msg->qos_durability.push_back("VOLATILE");
   }
 
   int status;

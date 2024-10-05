@@ -85,6 +85,8 @@ private:
   std::unordered_map<std::string,
     typename rclcpp::Subscription<TopicT>::SharedPtr> subscriptions_;
 
+  std::unordered_map<std::string, rclcpp::QoS> qos_map_;
+
   std::string topic_;
   std::string topic_type_;
   std::string type_;
