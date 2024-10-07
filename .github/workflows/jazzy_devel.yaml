@@ -12,6 +12,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Install rosdep
+        run: sudo apt update && sudo apt install -y python3-rosdep
+
       - name: Setup ROS 2 environment
         uses: ros-tooling/setup-ros@0.7.0
         with:
