@@ -130,19 +130,19 @@ void InstrumentationConsumer<TopicT>::publish_status()
     auto qos = qos_map_.find(entry.first);
 
     if (qos != qos_map_.end()) {
-      status_msg->qos_history.push_back
-          (qos->second.get_rmw_qos_profile().history ==
-          RMW_QOS_POLICY_HISTORY_KEEP_LAST ?
-          "KEEP_LAST" : "KEEP_ALL");
+      status_msg->qos_history.push_back(
+        qos->second.get_rmw_qos_profile().history ==
+        RMW_QOS_POLICY_HISTORY_KEEP_LAST ?
+        "KEEP_LAST" : "KEEP_ALL");
       status_msg->qos_queue.push_back(qos->second.get_rmw_qos_profile().depth);
       status_msg->qos_reliability.push_back(
-          qos->second.get_rmw_qos_profile().reliability ==
-          RMW_QOS_POLICY_RELIABILITY_RELIABLE ?
-          "RELIABLE" : "BEST_EFFORT");
+        qos->second.get_rmw_qos_profile().reliability ==
+        RMW_QOS_POLICY_RELIABILITY_RELIABLE ?
+        "RELIABLE" : "BEST_EFFORT");
       status_msg->qos_durability.push_back(
-          qos->second.get_rmw_qos_profile().durability ==
-          RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL ?
-          "TRANSIENT_LOCAL" : "VOLATILE");
+        qos->second.get_rmw_qos_profile().durability ==
+        RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL ?
+        "TRANSIENT_LOCAL" : "VOLATILE");
     }
   }
 
