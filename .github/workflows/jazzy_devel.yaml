@@ -21,7 +21,7 @@ jobs:
           required-ros-distributions: jazzy
 
       - name: Build ROS 2 package
-        uses: ros-tooling/action-ros-ci@v0.3.13
+        uses: ros-tooling/action-ros-ci@0.3.13
         with:
           package-name: coresense_instrumentation_driver coresense_instrumentation_interfaces coresense_instrumentation_rviz
           target-ros2-distro: jazzy
